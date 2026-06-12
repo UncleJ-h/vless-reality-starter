@@ -1,0 +1,39 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: xray-config
+  namespace: xray
+data:
+  config.json: |
+    {
+      "log": {
+        "loglevel": "warning"
+      },
+      "inbounds": [
+        {
+          "port": 10000,
+          "protocol": "vless",
+          "settings": {
+            "clients": [
+              {
+                "id": "<YOUR_UUID>",
+                "level": 0
+              }
+            ],
+            "decryption": "none"
+          },
+          "streamSettings": {
+            "network": "ws",
+            "wsSettings": {
+              "path": "/ws"
+            }
+          }
+        }
+      ],
+      "outbounds": [
+        {
+          "protocol": "freedom",
+          "settings": {}
+        }
+      ]
+    }

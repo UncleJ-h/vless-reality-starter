@@ -1,0 +1,140 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+if [[ "${EUID}" -ne 0 ]]; then
+  echo "Please run as root: sudo SERVER_HOST=<ip-or-domain> $0"
+  exit 1
+fi
+
+TARGET="${TARGET:-www.microsoft.com:443}"
+SERVER_NAME="${SERVER_NAME:-www.microsoft.com}"
+PORT="${PORT:-443}"
+SERVER_HOST="${SERVER_HOST:-}"
+UUID="${UUID:-}"
+SHORT_ID="${SHORT_ID:-}"
+DISABLE_ZEABUR_K3S="${DISABLE_ZEABUR_K3S:-1}"
+
+if [[ -z "${SERVER_HOST}" ]]; then
+  SERVER_HOST="$(curl -4fsS https://api.ipify.org)"
+fi
+
+apt-get update
+apt-get install -y curl unzip jq openssl ufw
+
+bash -c "$(curl -L https://github.com/XTLS/Xray-install/raw/main/install-release.sh)" @ install -u root
+
+if [[ "${DISABLE_ZEABUR_K3S}" == "1" ]]; then
+  for unit in init-k3s k3s containerd; do
+    if systemctl list-unit-files | grep -q "^${unit}\.service"; then
+      systemctl disable --now "${unit}" || true
+    fi
+  done
+
+  pkill -f '/var/lib/rancher/k3s/.*/containerd-shim-runc-v2' || true
+  pkill -f '/go/bin/main' || true
+fi
+
+if [[ -z "${UUID}" ]]; then
+  UUID="$(/usr/local/bin/xray uuid)"
+fi
+
+if [[ -z "${SHORT_ID}" ]]; then
+  SHORT_ID="$(openssl rand -hex 8)"
+fi
+
+X25519_OUTPUT="$("/usr/local/bin/xray" x25519)"
+PRIVATE_KEY="$(awk '/PrivateKey:/ {print $2}' <<<"${X25519_OUTPUT}")"
+# Xray v26 prints the public key using the label "Password".
+PUBLIC_KEY="$(awk '/Password:/ {print $2}' <<<"${X25519_OUTPUT}")"
+
+cat > /usr/local/etc/xray/config.json <<EOF
+{
+  "log": {
+    "loglevel": "warning"
+  },
+  "inbounds": [
+    {
+      "listen": "0.0.0.0",
+      "port": ${PORT},
+      "protocol": "vless",
+      "settings": {
+        "clients": [
+          {
+            "id": "${UUID}",
+            "flow": "xtls-rprx-vision"
+          }
+        ],
+        "decryption": "none"
+      },
+      "streamSettings": {
+        "network": "tcp",
+        "security": "reality",
+        "realitySettings": {
+          "show": false,
+          "target": "${TARGET}",
+          "xver": 0,
+          "serverNames": ["${SERVER_NAME}"],
+          "privateKey": "${PRIVATE_KEY}",
+          "shortIds": ["${SHORT_ID}"]
+        }
+      },
+      "sniffing": {
+        "enabled": true,
+        "destOverride": ["http", "tls", "quic"]
+      }
+    }
+  ],
+  "outbounds": [
+    {
+      "protocol": "freedom",
+      "tag": "direct"
+    },
+    {
+      "protocol": "blackhole",
+      "tag": "block"
+    }
+  ]
+}
+EOF
+
+/usr/local/bin/xray run -test -config /usr/local/etc/xray/config.json
+systemctl enable --now xray
+systemctl restart xray
+
+ufw allow OpenSSH
+ufw allow "${PORT}/tcp"
+ufw --force enable
+
+cat <<EOF
+
+=== Server Ready ===
+Address: ${SERVER_HOST}
+Port: ${PORT}
+UUID: ${UUID}
+Public Key: ${PUBLIC_KEY}
+Short ID: ${SHORT_ID}
+Server Name: ${SERVER_NAME}
+Target: ${TARGET}
+
+=== VLESS URL ===
+vless://${UUID}@${SERVER_HOST}:${PORT}?encryption=none&flow=xtls-rprx-vision&security=reality&sni=${SERVER_NAME}&fp=chrome&pbk=${PUBLIC_KEY}&sid=${SHORT_ID}&type=tcp&headerType=none#MyReality
+
+=== Clash Meta Node ===
+- name: MyReality
+  type: vless
+  server: ${SERVER_HOST}
+  port: ${PORT}
+  uuid: ${UUID}
+  network: tcp
+  tls: true
+  udp: true
+  xudp: true
+  servername: ${SERVER_NAME}
+  reality-opts:
+    public-key: ${PUBLIC_KEY}
+    short-id: ${SHORT_ID}
+  client-fingerprint: chrome
+  flow: xtls-rprx-vision
+
+EOF

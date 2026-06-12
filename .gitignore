@@ -1,0 +1,14 @@
+.DS_Store
+*.swp
+*.swo
+private/
+
+# Work notes – not for public repo
+findings.md
+progress.md
+task_plan.md
+docs/superpowers/
+
+# Open-source pipeline reports – not for public history
+FORK_REPORT.md
+SANITIZATION_REPORT.md
