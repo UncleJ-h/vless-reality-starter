@@ -15,6 +15,11 @@ UUID="${UUID:-}"
 SHORT_ID="${SHORT_ID:-}"
 DISABLE_ZEABUR_K3S="${DISABLE_ZEABUR_K3S:-1}"
 
+if ! command -v curl >/dev/null 2>&1; then
+  apt-get update
+  apt-get install -y curl
+fi
+
 if [[ -z "${SERVER_HOST}" ]]; then
   SERVER_HOST="$(curl -4fsS https://api.ipify.org)"
 fi
@@ -44,9 +49,18 @@ if [[ -z "${SHORT_ID}" ]]; then
 fi
 
 X25519_OUTPUT="$("/usr/local/bin/xray" x25519)"
-PRIVATE_KEY="$(awk '/PrivateKey:/ {print $2}' <<<"${X25519_OUTPUT}")"
-# Xray v26 prints the public key using the label "Password".
-PUBLIC_KEY="$(awk '/Password:/ {print $2}' <<<"${X25519_OUTPUT}")"
+PRIVATE_KEY="$(awk '/PrivateKey:|Private key:/ {print $NF}' <<<"${X25519_OUTPUT}")"
+PUBLIC_KEY="$(awk '/PublicKey:|Public key:/ {print $NF}' <<<"${X25519_OUTPUT}")"
+if [[ -z "${PUBLIC_KEY}" ]]; then
+  # Xray v26 also prints a REALITY "Password" value that clients can use.
+  PUBLIC_KEY="$(awk '/Password:/ {print $NF}' <<<"${X25519_OUTPUT}")"
+fi
+
+if [[ -z "${PRIVATE_KEY}" || -z "${PUBLIC_KEY}" ]]; then
+  echo "ERROR: failed to parse xray x25519 output" >&2
+  echo "${X25519_OUTPUT}" >&2
+  exit 1
+fi
 
 cat > /usr/local/etc/xray/config.json <<EOF
 {
@@ -101,6 +115,15 @@ EOF
 /usr/local/bin/xray run -test -config /usr/local/etc/xray/config.json
 systemctl enable --now xray
 systemctl restart xray
+
+cat > /usr/local/etc/xray/reality-client.env <<EOF
+SERVER_HOST=${SERVER_HOST}
+PORT=${PORT}
+SERVER_NAME=${SERVER_NAME}
+PUBLIC_KEY=${PUBLIC_KEY}
+SHORT_ID=${SHORT_ID}
+EOF
+chmod 600 /usr/local/etc/xray/reality-client.env
 
 ufw allow OpenSSH
 ufw allow "${PORT}/tcp"
