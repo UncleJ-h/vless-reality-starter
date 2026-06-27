@@ -52,7 +52,7 @@
         "network": "tcp",
         "security": "reality",
         "realitySettings": {
-          "serverName": "www.microsoft.com",
+          "serverName": "www.bing.com",
           "fingerprint": "chrome",
           "publicKey": "REPLACE_WITH_PUBLIC_KEY",
           "shortId": "REPLACE_WITH_SHORT_ID"

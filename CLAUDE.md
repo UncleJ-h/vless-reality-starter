@@ -56,8 +56,8 @@ All config via environment variables (no .env file loaded by the script — pass
 | Variable | Default | Description |
 |---|---|---|
 | `SERVER_HOST` | auto (ipify) | VPS public IP or domain |
-| `TARGET` | `www.microsoft.com:443` | REALITY camouflage target |
-| `SERVER_NAME` | `www.microsoft.com` | SNI for clients |
+| `TARGET` | `www.bing.com:443` | REALITY camouflage target |
+| `SERVER_NAME` | `www.bing.com` | SNI for clients |
 | `PORT` | `443` | Xray inbound port |
 | `UUID` | auto-generate | VLESS UUID |
 | `SHORT_ID` | auto-generate | 8-byte hex short ID |

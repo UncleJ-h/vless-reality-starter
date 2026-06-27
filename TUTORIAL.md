@@ -20,7 +20,7 @@ Estimated time: 15–20 minutes for the happy path.
 
 ## Why VLESS + REALITY
 
-Most encrypted proxy protocols negotiate a custom TLS handshake that a deep-packet-inspection firewall can fingerprint, even without decrypting the payload. REALITY sidesteps this by borrowing a real TLS 1.3 handshake from a high-quality destination such as `www.microsoft.com`. To an observer on the wire, your proxy traffic looks like a normal HTTPS connection to that domain.
+Most encrypted proxy protocols negotiate a custom TLS handshake that a deep-packet-inspection firewall can fingerprint, even without decrypting the payload. REALITY sidesteps this by borrowing a real TLS 1.3 handshake from a high-quality destination such as `www.bing.com`. To an observer on the wire, your proxy traffic looks like a normal HTTPS connection to that domain.
 
 VLESS is the transport layer that sits inside that handshake. It is stateless, has no per-connection overhead, and supports the `xtls-rprx-vision` flow control mode, which passes the inner TLS record layer through unmodified to further reduce fingerprinting.
 
@@ -103,8 +103,8 @@ All configuration is passed as environment variables. The script has safe defaul
 |----------|---------|--------------|
 | `SERVER_HOST` | auto-detected | The IP or domain clients will connect to. Set this explicitly if your VPS has multiple interfaces or if auto-detection returns the wrong address. |
 | `PORT` | `443` | Listening port. Stick with 443 unless your provider blocks it. |
-| `TARGET` | `www.microsoft.com:443` | The real TLS 1.3 site whose handshake REALITY borrows. Must be a site that supports TLS 1.3 and is reachable from your server. |
-| `SERVER_NAME` | `www.microsoft.com` | The SNI value presented to clients. Must match `TARGET`. |
+| `TARGET` | `www.bing.com:443` | The real TLS 1.3 site whose handshake REALITY borrows. Must be a site that supports TLS 1.3 and is reachable from your server. |
+| `SERVER_NAME` | `www.bing.com` | The SNI value presented to clients. Must match `TARGET`. |
 | `UUID` | auto-generated | Your client identity token. Auto-generation is fine; save the output. |
 | `SHORT_ID` | auto-generated | An 8-byte hex value that identifies this server to clients. Auto-generation is fine; save the output. |
 | `DISABLE_ZEABUR_K3S` | `1` | Set to `0` on non-Zeabur hosts if you want to suppress K3s teardown entirely. |
@@ -124,7 +124,7 @@ If you want to pin a specific IP or domain as the server address:
 sudo SERVER_HOST=<YOUR_SERVER_IP> bash single-host/setup-reality.sh
 ```
 
-To override the camouflage target (for example, if `www.microsoft.com` is slow from your region):
+To override the camouflage target (for example, if `www.bing.com` is slow from your region):
 
 ```bash
 sudo SERVER_HOST=<YOUR_SERVER_IP> TARGET=www.apple.com:443 SERVER_NAME=www.apple.com \
@@ -142,11 +142,11 @@ Port: 443
 UUID: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
 Public Key: <base64-public-key>
 Short ID: <16-hex-chars>
-Server Name: www.microsoft.com
-Target: www.microsoft.com:443
+Server Name: www.bing.com
+Target: www.bing.com:443
 
 === VLESS URL ===
-vless://xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx@<YOUR_SERVER_IP>:443?encryption=none&flow=xtls-rprx-vision&security=reality&sni=www.microsoft.com&fp=chrome&pbk=<base64-public-key>&sid=<16-hex-chars>&type=tcp&headerType=none#MyReality
+vless://xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx@<YOUR_SERVER_IP>:443?encryption=none&flow=xtls-rprx-vision&security=reality&sni=www.bing.com&fp=chrome&pbk=<base64-public-key>&sid=<16-hex-chars>&type=tcp&headerType=none#MyReality
 
 === Clash Meta Node ===
 - name: MyReality
@@ -209,7 +209,7 @@ proxies:
     tls: true
     udp: true
     xudp: true
-    servername: www.microsoft.com
+    servername: www.bing.com
     reality-opts:
       public-key: <base64-public-key>
       short-id: <16-hex-chars>
@@ -286,7 +286,7 @@ journalctl -u xray -n 50 --no-pager
 A healthy log shows `warning`-level lines only (the default log level). If you see `error` lines with connection reset or TLS failure messages, check that the `TARGET` domain is reachable from the server:
 
 ```bash
-curl -I https://www.microsoft.com --connect-timeout 5
+curl -I https://www.bing.com --connect-timeout 5
 # Expected: HTTP/2 200 or 301
 ```
 
@@ -341,7 +341,7 @@ ufw --force enable
 
 **Symptom:** Connections succeed but latency is high, or the Xray log shows repeated errors connecting to the target.
 
-**Cause:** `www.microsoft.com` is the default camouflage target. If it is slow from your VPS region, you can switch to another high-quality TLS 1.3 site.
+**Cause:** `www.bing.com` is the default camouflage target. If it is slow from your VPS region, you can switch to another high-quality TLS 1.3 site.
 
 **Fix:** Re-run the script with a different target. Common alternatives: `www.apple.com:443`, `www.amazon.com:443`. The site must support TLS 1.3 and be consistently reachable from the server:
 

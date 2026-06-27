@@ -7,8 +7,8 @@ if [[ "${EUID}" -ne 0 ]]; then
   exit 1
 fi
 
-TARGET="${TARGET:-www.microsoft.com:443}"
-SERVER_NAME="${SERVER_NAME:-www.microsoft.com}"
+TARGET="${TARGET:-www.bing.com:443}"
+SERVER_NAME="${SERVER_NAME:-www.bing.com}"
 PORT="${PORT:-443}"
 SERVER_HOST="${SERVER_HOST:-}"
 UUID="${UUID:-}"
@@ -53,7 +53,7 @@ PRIVATE_KEY="$(awk '/PrivateKey:|Private key:/ {print $NF}' <<<"${X25519_OUTPUT}
 PUBLIC_KEY="$(awk '/PublicKey:|Public key:/ {print $NF}' <<<"${X25519_OUTPUT}")"
 if [[ -z "${PUBLIC_KEY}" ]]; then
   # Xray v26 also prints a REALITY "Password" value that clients can use.
-  PUBLIC_KEY="$(awk '/Password:/ {print $NF}' <<<"${X25519_OUTPUT}")"
+  PUBLIC_KEY="$(awk '/Password/ {print $NF}' <<<"${X25519_OUTPUT}")"
 fi
 
 if [[ -z "${PRIVATE_KEY}" || -z "${PUBLIC_KEY}" ]]; then

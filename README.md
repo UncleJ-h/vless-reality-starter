@@ -30,7 +30,9 @@ No Cloudflare proxy. No domain required. No TLS certificate to manage.
 
 ## Why REALITY
 
-REALITY is a TLS 1.3 camouflage layer built into Xray. Your node borrows the TLS handshake signature of a real, high-traffic site (e.g. `www.microsoft.com`) so that deep-packet inspection sees a legitimate connection, not a proxy.
+REALITY is a TLS 1.3 camouflage layer built into Xray. Your node borrows the TLS handshake signature of a real, high-traffic site (default: `www.bing.com`) so that deep-packet inspection sees a legitimate connection, not a proxy.
+
+The default camouflage target is `www.bing.com:443`. Earlier versions used `www.microsoft.com:443`, but Bing has been a more reliable default in recent Xray + REALITY smoke tests. You can still override both `TARGET` and `SERVER_NAME` if your VPS reaches another TLS 1.3 site more reliably.
 
 Compared to the earlier Websocket + Cloudflare approach:
 
@@ -57,7 +59,7 @@ scp single-host/setup-reality.sh ubuntu@<YOUR_SERVER_IP>:~
 
 # 3. SSH in and run
 ssh ubuntu@<YOUR_SERVER_IP>
-sudo SERVER_HOST=<YOUR_SERVER_IP> bash setup-reality.sh
+sudo SERVER_HOST=<YOUR_SERVER_IP> DISABLE_ZEABUR_K3S=0 bash setup-reality.sh
 ```
 
 The script prints your connection parameters when it finishes. Copy the VLESS URL into your client and you are done.
@@ -73,8 +75,8 @@ All overrides are optional; the script auto-detects `SERVER_HOST` via `api.ipify
 | Variable | Default | Description |
 |---|---|---|
 | `SERVER_HOST` | auto-detect | VPS public IP or domain |
-| `TARGET` | `www.microsoft.com:443` | REALITY camouflage target |
-| `SERVER_NAME` | `www.microsoft.com` | SNI presented to clients |
+| `TARGET` | `www.bing.com:443` | REALITY camouflage target |
+| `SERVER_NAME` | `www.bing.com` | SNI presented to clients |
 | `PORT` | `443` | Listening port |
 | `UUID` | auto-generate | VLESS client UUID |
 | `SHORT_ID` | auto-generate | 8-byte hex short ID |
@@ -84,6 +86,7 @@ Example with explicit overrides:
 
 ```bash
 sudo SERVER_HOST=<YOUR_SERVER_IP> \
+  DISABLE_ZEABUR_K3S=0 \
   SERVER_NAME=www.apple.com \
   TARGET=www.apple.com:443 \
   bash setup-reality.sh
@@ -104,7 +107,7 @@ Port: 443
 UUID: <generated-uuid>
 Public Key: <generated-public-key>
 Short ID: <generated-short-id>
-Server Name: www.microsoft.com
+Server Name: www.bing.com
 ```
 
 ### Manual client settings

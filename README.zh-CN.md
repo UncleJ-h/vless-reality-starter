@@ -30,7 +30,9 @@
 
 ## 为什么用 REALITY
 
-REALITY 是 Xray 内置的 TLS 1.3 伪装层。你的节点借用真实高流量站点（如 `www.microsoft.com`）的 TLS 握手签名，深度包检测看到的是合法连接，而不是代理。
+REALITY 是 Xray 内置的 TLS 1.3 伪装层。你的节点借用真实高流量站点（默认 `www.bing.com`）的 TLS 握手签名，深度包检测看到的是合法连接，而不是代理。
+
+当前默认伪装目标是 `www.bing.com:443`。早期版本使用 `www.microsoft.com:443`，但近期 Xray + REALITY 实测里 Bing 作为默认值更少出现握手问题。如果你的 VPS 到其他 TLS 1.3 站点更稳定，仍然可以同时覆盖 `TARGET` 和 `SERVER_NAME`。
 
 与早期 WebSocket + Cloudflare 方案对比：
 
@@ -100,8 +102,8 @@ sudo SERVER_HOST=<YOUR_SERVER_IP> DISABLE_ZEABUR_K3S=0 bash setup-reality.sh
 | 变量 | 默认值 | 说明 |
 |---|---|---|
 | `SERVER_HOST` | 自动检测 | VPS 公网 IP 或域名 |
-| `TARGET` | `www.microsoft.com:443` | REALITY 伪装目标 |
-| `SERVER_NAME` | `www.microsoft.com` | 向客户端展示的 SNI |
+| `TARGET` | `www.bing.com:443` | REALITY 伪装目标 |
+| `SERVER_NAME` | `www.bing.com` | 向客户端展示的 SNI |
 | `PORT` | `443` | 监听端口 |
 | `UUID` | 自动生成 | VLESS 客户端 UUID |
 | `SHORT_ID` | 自动生成 | 8 字节十六进制 Short ID |
@@ -132,7 +134,7 @@ Port: 443
 UUID: <generated-uuid>
 Public Key: <generated-public-key>
 Short ID: <generated-short-id>
-Server Name: www.microsoft.com
+Server Name: www.bing.com
 ```
 
 ### 手动配置客户端

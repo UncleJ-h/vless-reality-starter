@@ -90,7 +90,7 @@ sudo SERVER_HOST=YOUR_SERVER_IP DISABLE_ZEABUR_K3S=0 bash single-host/setup-real
 
 - `SERVER_HOST` 是客户端连接地址，可以是 VPS IP，也可以是 DNS only 的域名。
 - `DISABLE_ZEABUR_K3S=0` 表示这台机器不是 Zeabur Dedicated Server，不需要清理 Zeabur k3s。
-- 默认伪装目标是 `www.microsoft.com:443`，新手不用改。
+- 默认伪装目标是 `www.bing.com:443`，新手不用改。
 
 ## 第三步：保存脚本输出
 
@@ -103,8 +103,8 @@ Port: 443
 UUID: ...
 Public Key: ...
 Short ID: ...
-Server Name: www.microsoft.com
-Target: www.microsoft.com:443
+Server Name: www.bing.com
+Target: www.bing.com:443
 
 === VLESS URL ===
 vless://...
@@ -163,7 +163,7 @@ sudo ufw status numbered
 | 传输 | `tcp` |
 | Flow | `xtls-rprx-vision` |
 | TLS | `Reality` |
-| SNI | `www.microsoft.com`，除非你运行脚本时改过 |
+| SNI | `www.bing.com`，除非你运行脚本时改过 |
 | Public Key | 脚本输出 |
 | Short ID | 脚本输出 |
 | Fingerprint | `chrome` |
